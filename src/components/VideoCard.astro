@@ -1,0 +1,34 @@
+---
+import type { Video } from "../data/videos";
+import { normalizeText } from "../lib/search";
+
+interface Props {
+  video: Video;
+}
+
+const { video } = Astro.props;
+---
+
+<li id={`video-${video.id}`}>
+  <button
+    type="button"
+    class="video-card"
+    data-video-card
+    data-video-id={video.id}
+    data-youtube-id={video.youtubeId}
+    data-title={video.title}
+    data-title-normalized={normalizeText(video.title)}
+  >
+    <img
+      src={`https://i.ytimg.com/vi/${video.youtubeId}/hqdefault.jpg`}
+      alt=""
+      loading="lazy"
+      width="480"
+      height="360"
+    />
+    <span class="video-card-info">
+      <span class="video-card-title">{video.title}</span>
+      <span class="video-card-duration">Duração aproximada: {video.durationLabel}</span>
+    </span>
+  </button>
+</li>

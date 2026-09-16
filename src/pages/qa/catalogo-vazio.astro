@@ -1,0 +1,22 @@
+---
+// Rota interna de apoio a testes E2E: renderiza o catálogo sem nenhum vídeo
+// cadastrado (RF01, cenário "página inicial sem nenhum vídeo cadastrado").
+// Não é linkada em nenhum lugar do site e é excluída de indexação.
+import "../../styles/global.css";
+import VideoCatalog from "../../components/VideoCatalog.astro";
+import { categories } from "../../data/videos";
+---
+
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>QA — Catálogo vazio</title>
+  </head>
+  <body>
+    <main class="container">
+      <VideoCatalog videos={[]} categories={categories} />
+    </main>
+  </body>
+</html>

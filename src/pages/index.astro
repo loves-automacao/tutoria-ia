@@ -1,0 +1,227 @@
+---
+import "../styles/global.css";
+import VideoCatalog from "../components/VideoCatalog.astro";
+import { videos, categories } from "../data/videos";
+
+const startHereVideos = videos.filter((video) => video.startHere);
+const pageTitle = "Tutoria IA — Vídeos simples para aprender Inteligência Artificial";
+const pageDescription =
+  "Vídeos curtos e explicados com calma para você aprender a usar inteligência artificial no seu dia a dia, no seu tempo.";
+---
+
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDescription} />
+  </head>
+  <body>
+    <a href="#conteudo" class="skip-link">Pular para o conteúdo</a>
+
+    <header class="site-header">
+      <h1>Tutoria IA</h1>
+      <p>{pageDescription}</p>
+    </header>
+
+    <main id="conteudo" class="container">
+      {startHereVideos.length > 0 && (
+        <section class="start-here" aria-labelledby="comece-aqui">
+          <h2 id="comece-aqui">Nunca usou IA antes? Comece aqui</h2>
+          <ul>
+            {startHereVideos.map((video) => (
+              <li>
+                <a href={`#video-${video.id}`} data-start-here-link data-video-id={video.id}>
+                  {video.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section class="player-section" id="player-section" hidden>
+        <button type="button" class="back-button" id="back-to-list">
+          ← Voltar para a lista de vídeos
+        </button>
+        <h2 id="player-title"></h2>
+        <div class="player-wrapper" id="player-wrapper"></div>
+        <p class="player-error" id="player-error" hidden>
+          Não foi possível carregar este vídeo agora.
+          <button type="button" id="player-error-back">Voltar para a lista de vídeos</button>
+        </p>
+      </section>
+
+      <VideoCatalog videos={videos} categories={categories} />
+    </main>
+
+    <button type="button" class="back-to-top" id="back-to-top">Voltar ao topo</button>
+
+    <script>
+      import { normalizeText } from "../lib/search";
+
+      const searchInput = document.getElementById("search-input") as HTMLInputElement;
+      const clearSearchButton = document.getElementById("clear-search") as HTMLButtonElement;
+      const emptyState = document.getElementById("empty-state") as HTMLElement;
+      const categorySections = Array.from(
+        document.querySelectorAll<HTMLElement>("[data-category-section]")
+      );
+      const videoCards = Array.from(
+        document.querySelectorAll<HTMLButtonElement>("[data-video-card]")
+      );
+
+      const playerSection = document.getElementById("player-section") as HTMLElement;
+      const playerWrapper = document.getElementById("player-wrapper") as HTMLElement;
+      const playerTitle = document.getElementById("player-title") as HTMLElement;
+      const playerError = document.getElementById("player-error") as HTMLElement;
+      const videoListSection = document.getElementById("video-list-section") as HTMLElement;
+      const backToListButton = document.getElementById("back-to-list") as HTMLButtonElement;
+      const backToTopButton = document.getElementById("back-to-top") as HTMLButtonElement;
+      const playerErrorBack = document.getElementById("player-error-back") as HTMLButtonElement;
+
+      function applyFilter(query: string) {
+        const normalizedQuery = normalizeText(query);
+        let visibleCount = 0;
+
+        for (const section of categorySections) {
+          let visibleInSection = 0;
+          const cards = section.querySelectorAll<HTMLButtonElement>("[data-video-card]");
+          for (const card of cards) {
+            const titleNormalized = card.dataset.titleNormalized ?? "";
+            const matches = !normalizedQuery || titleNormalized.includes(normalizedQuery);
+            const listItem = card.closest("li");
+            if (listItem) listItem.hidden = !matches;
+            if (matches) {
+              visibleInSection += 1;
+              visibleCount += 1;
+            }
+          }
+          section.hidden = visibleInSection === 0;
+        }
+
+        emptyState.hidden = visibleCount !== 0;
+      }
+
+      searchInput?.addEventListener("input", () => applyFilter(searchInput.value));
+
+      clearSearchButton?.addEventListener("click", () => {
+        searchInput.value = "";
+        applyFilter("");
+        searchInput.focus();
+      });
+
+      // A API do player (em vez de um <iframe> simples) é necessária para
+      // detectar via onError um vídeo removido/privado incorretamente (cross-origin
+      // impede detectar isso a partir de um <iframe> comum).
+      let youTubeApiPromise: Promise<any> | null = null;
+      function loadYouTubeApi(): Promise<any> {
+        const w = window as any;
+        if (!youTubeApiPromise) {
+          youTubeApiPromise = new Promise((resolve) => {
+            if (w.YT?.Player) {
+              resolve(w.YT);
+              return;
+            }
+            const previousCallback = w.onYouTubeIframeAPIReady;
+            w.onYouTubeIframeAPIReady = () => {
+              previousCallback?.();
+              resolve(w.YT);
+            };
+            const script = document.createElement("script");
+            script.src = "https://www.youtube.com/iframe_api";
+            document.head.appendChild(script);
+          });
+        }
+        return youTubeApiPromise;
+      }
+
+      function showPlayerError() {
+        playerWrapper.innerHTML = "";
+        playerError.hidden = false;
+      }
+
+      function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+        return new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("timeout")), ms);
+          promise.then(
+            (value) => {
+              clearTimeout(timer);
+              resolve(value);
+            },
+            (error) => {
+              clearTimeout(timer);
+              reject(error);
+            }
+          );
+        });
+      }
+
+      async function playVideo(youtubeId: string, title: string) {
+        playerError.hidden = true;
+        playerTitle.textContent = title;
+        playerWrapper.innerHTML = "";
+
+        videoListSection.hidden = true;
+        playerSection.hidden = false;
+        backToListButton.focus();
+        playerSection.scrollIntoView({ behavior: "smooth", block: "start" });
+
+        if (!youtubeId) {
+          showPlayerError();
+          return;
+        }
+
+        const mountPoint = document.createElement("div");
+        playerWrapper.appendChild(mountPoint);
+
+        try {
+          const YT = await withTimeout(loadYouTubeApi(), 8000);
+          new YT.Player(mountPoint, {
+            videoId: youtubeId,
+            host: "https://www.youtube-nocookie.com",
+            playerVars: { autoplay: 1, rel: 0 },
+            events: {
+              onError: showPlayerError,
+            },
+          });
+        } catch {
+          showPlayerError();
+        }
+      }
+
+      function backToList() {
+        playerSection.hidden = true;
+        playerWrapper.innerHTML = "";
+        videoListSection.hidden = false;
+      }
+
+      for (const card of videoCards) {
+        card.addEventListener("click", () => {
+          const { youtubeId = "", title = "" } = card.dataset;
+          playVideo(youtubeId, title);
+        });
+      }
+
+      for (const link of document.querySelectorAll<HTMLAnchorElement>("[data-start-here-link]")) {
+        link.addEventListener("click", (event) => {
+          event.preventDefault();
+          const videoId = link.dataset.videoId;
+          const card = document.querySelector<HTMLButtonElement>(
+            `[data-video-card][data-video-id="${videoId}"]`
+          );
+          if (card) {
+            const { youtubeId = "", title = "" } = card.dataset;
+            playVideo(youtubeId, title);
+          }
+        });
+      }
+
+      backToListButton?.addEventListener("click", backToList);
+      playerErrorBack?.addEventListener("click", backToList);
+
+      backToTopButton?.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    </script>
+  </body>
+</html>

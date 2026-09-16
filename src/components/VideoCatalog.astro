@@ -1,0 +1,60 @@
+---
+import type { Video } from "../data/videos";
+import { normalizeText } from "../lib/search";
+import VideoCard from "./VideoCard.astro";
+
+interface Props {
+  videos: Video[];
+  categories: readonly string[];
+}
+
+const { videos, categories } = Astro.props;
+
+function normalizeSlug(text: string): string {
+  return normalizeText(text).replace(/\s+/g, "-");
+}
+---
+
+<section class="search-section" id="video-list-section">
+  {
+    videos.length === 0 ? (
+      <p class="empty-state" id="no-videos-message">
+        Ainda não há vídeos disponíveis. Volte em breve!
+      </p>
+    ) : (
+      <>
+        <label for="search-input">Buscar vídeo por palavra-chave</label>
+        <input
+          type="search"
+          id="search-input"
+          name="search"
+          placeholder="Ex: ChatGPT, segurança, receitas..."
+          autocomplete="off"
+        />
+
+        <p class="empty-state" id="empty-state" hidden>
+          Nenhum vídeo encontrado.
+          <button type="button" id="clear-search">
+            Ver todos os vídeos
+          </button>
+        </p>
+
+        {categories.map((category) => {
+          const categoryVideos = videos.filter((video) => video.category === category);
+          if (categoryVideos.length === 0) return null;
+          const categoryId = `categoria-${normalizeSlug(category)}`;
+          return (
+            <section class="category" data-category-section aria-labelledby={categoryId}>
+              <h2 id={categoryId}>{category}</h2>
+              <ul class="video-grid">
+                {categoryVideos.map((video) => (
+                  <VideoCard video={video} />
+                ))}
+              </ul>
+            </section>
+          );
+        })}
+      </>
+    )
+  }
+</section>
