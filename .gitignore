@@ -32,3 +32,5 @@ coverage/
 # design handoff (not part of the site)
 design_handoff_home/
 *.zip
+.vercel
+.env*
