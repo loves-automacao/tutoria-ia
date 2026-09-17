@@ -9,7 +9,6 @@ const videos: Video[] = [
     youtubeId: "abc123",
     category: "Primeiros passos",
     durationLabel: "5 min",
-    startHere: true,
   },
   {
     id: "2",

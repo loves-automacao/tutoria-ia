@@ -4,8 +4,6 @@ export interface Video {
   youtubeId: string;
   category: string;
   durationLabel: string;
-  /** Marca vídeos recomendados para quem nunca usou IA (RF05). */
-  startHere?: boolean;
 }
 
 export const categories = [
@@ -23,7 +21,6 @@ export const videos: Video[] = [
     youtubeId: "SUBSTITUIR_ID_1",
     category: "Primeiros passos",
     durationLabel: "4 min",
-    startHere: true,
   },
   {
     id: "2",
@@ -31,7 +28,6 @@ export const videos: Video[] = [
     youtubeId: "SUBSTITUIR_ID_2",
     category: "Primeiros passos",
     durationLabel: "6 min",
-    startHere: true,
   },
   {
     id: "3",

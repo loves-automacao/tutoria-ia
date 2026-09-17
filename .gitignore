@@ -28,3 +28,7 @@ test-results/
 playwright-report/
 blob-report/
 coverage/
+
+# design handoff (not part of the site)
+design_handoff_home/
+*.zip

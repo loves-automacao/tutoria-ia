@@ -23,14 +23,22 @@ function normalizeSlug(text: string): string {
       </p>
     ) : (
       <>
-        <label for="search-input">Buscar vídeo por palavra-chave</label>
-        <input
-          type="search"
-          id="search-input"
-          name="search"
-          placeholder="Ex: ChatGPT, segurança, receitas..."
-          autocomplete="off"
-        />
+        <label for="search-input" class="search-label">
+          O que você quer aprender hoje?
+        </label>
+        <div class="search-row">
+          <input
+            type="search"
+            id="search-input"
+            name="search"
+            class="search-input"
+            placeholder="Escreva aqui. Ex.: receitas, golpes, ChatGPT"
+            autocomplete="off"
+          />
+          <button type="button" class="search-button" id="search-button">
+            Buscar
+          </button>
+        </div>
 
         <p class="empty-state" id="empty-state" hidden>
           Nenhum vídeo encontrado.
@@ -39,13 +47,24 @@ function normalizeSlug(text: string): string {
           </button>
         </p>
 
+        <nav class="jump-row" aria-label="Ir direto para uma categoria">
+          <span>Ou desça a página:</span>
+          {categories.map((category) => {
+            const categoryVideos = videos.filter((video) => video.category === category);
+            if (categoryVideos.length === 0) return null;
+            return <a href={`#categoria-${normalizeSlug(category)}`}>{category}</a>;
+          })}
+        </nav>
+
         {categories.map((category) => {
           const categoryVideos = videos.filter((video) => video.category === category);
           if (categoryVideos.length === 0) return null;
           const categoryId = `categoria-${normalizeSlug(category)}`;
           return (
             <section class="category" data-category-section aria-labelledby={categoryId}>
-              <h2 id={categoryId}>{category}</h2>
+              <h2 id={categoryId} class="category-heading">
+                {category}
+              </h2>
               <ul class="video-grid">
                 {categoryVideos.map((video) => (
                   <VideoCard video={video} />

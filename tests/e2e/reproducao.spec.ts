@@ -5,6 +5,10 @@ import { test, expect } from "@playwright/test";
 // (ver src/data/videos.ts) até a equipe cadastrar os vídeos reais.
 // Por isso os testes abaixo verificam o comportamento de navegação/estado
 // da interface, que independe do conteúdo real do YouTube.
+//
+// Os seletores de "voltar à lista" são escopados a #player-section porque a
+// API do YouTube pode injetar seu próprio miniplayer no <body>, com um
+// elemento id="back-to-list" próprio — sem o escopo, o seletor vira ambíguo.
 
 test("reproduzir vídeo a partir da lista: carrega o player embutido sem redirecionar", async ({
   page,
@@ -21,7 +25,7 @@ test("reproduzir vídeo a partir da lista: carrega o player embutido sem redirec
   await expect(page.locator("#player-title")).toHaveText(title);
   expect(page.url()).toBe(urlBefore);
 
-  await expect(page.locator("#back-to-list")).toBeFocused();
+  await expect(page.locator("#player-section #back-to-list")).toBeFocused();
 });
 
 test("vídeo indisponível: exibe erro e caminho claro de volta à lista", async ({ page }) => {
@@ -42,7 +46,7 @@ test("botão voltar à lista funciona a partir do player", async ({ page }) => {
   await page.locator("[data-video-card]").first().click();
   await expect(page.locator("#player-section")).toBeVisible();
 
-  await page.locator("#back-to-list").click();
+  await page.locator("#player-section #back-to-list").click();
 
   await expect(page.locator("#video-list-section")).toBeVisible();
   await expect(page.locator("#player-section")).toBeHidden();

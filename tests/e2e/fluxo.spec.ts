@@ -12,14 +12,20 @@ test("chegar a um vídeo leva no máximo 1 clique a partir da página inicial", 
   await expect(page.locator("#player-section")).toBeVisible();
 });
 
-// RF05 — "Comece por aqui" também deve levar ao vídeo em 1 clique.
-test("links de 'comece aqui' levam direto ao vídeo em 1 clique", async ({ page }) => {
+// RF05 — "Primeiros passos" é a primeira categoria da página e também é
+// alcançável em 1 clique pelo atalho "Ou desça a página" (esse atalho é
+// removido no mobile por design — lá a categoria já é a primeira coisa
+// visível ao rolar, então o atalho seria redundante).
+test("atalho 'ou desça a página' leva direto à categoria de primeiros passos", async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, "jump-row é removida no mobile por design");
   await page.goto("/");
 
-  const startHereLink = page.locator("[data-start-here-link]").first();
-  await startHereLink.click();
+  await page.getByRole("link", { name: "Primeiros passos" }).click();
 
-  await expect(page.locator("#player-section")).toBeVisible();
+  await expect(page.locator("#categoria-primeiros-passos")).toBeInViewport();
 });
 
 // RF07 — Botão "voltar ao topo"

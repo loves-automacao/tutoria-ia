@@ -3,7 +3,6 @@ import "../styles/global.css";
 import VideoCatalog from "../components/VideoCatalog.astro";
 import { videos, categories } from "../data/videos";
 
-const startHereVideos = videos.filter((video) => video.startHere);
 const pageTitle = "Tutoria IA — Vídeos simples para aprender Inteligência Artificial";
 const pageDescription =
   "Vídeos curtos e explicados com calma para você aprender a usar inteligência artificial no seu dia a dia, no seu tempo.";
@@ -15,30 +14,78 @@ const pageDescription =
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{pageTitle}</title>
     <meta name="description" content={pageDescription} />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Atkinson+Hyperlegible:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script is:inline>
+      // Aplica preferências salvas antes da primeira renderização, evitando
+      // um "salto" visual de tamanho/contraste ao carregar a página.
+      try {
+        var savedScale = localStorage.getItem("tutoria-text-scale");
+        if (savedScale) document.documentElement.setAttribute("data-text-scale", savedScale);
+        var savedContrast = localStorage.getItem("tutoria-contrast");
+        if (savedContrast === "true") document.documentElement.setAttribute("data-contrast", "high");
+      } catch (error) {
+        // localStorage indisponível (ex: navegação privada) — segue com o padrão.
+      }
+    </script>
   </head>
   <body>
     <a href="#conteudo" class="skip-link">Pular para o conteúdo</a>
 
     <header class="site-header">
-      <h1>Tutoria IA</h1>
-      <p>{pageDescription}</p>
+      <div class="site-header-inner">
+        <span class="brand">Tutoria IA</span>
+
+        <div class="text-size-control" role="group" aria-label="Tamanho do texto">
+          <span class="text-size-label">Tamanho do texto</span>
+          <button
+            type="button"
+            class="text-size-btn"
+            data-text-scale-btn="0"
+            aria-pressed="false"
+            style="font-size: 0.9375rem"
+          >
+            A
+          </button>
+          <button
+            type="button"
+            class="text-size-btn"
+            data-text-scale-btn="1"
+            aria-pressed="true"
+            style="font-size: 1.1875rem"
+          >
+            A
+          </button>
+          <button
+            type="button"
+            class="text-size-btn"
+            data-text-scale-btn="2"
+            aria-pressed="false"
+            style="font-size: 1.4375rem"
+          >
+            A
+          </button>
+        </div>
+
+        <button type="button" class="contrast-toggle" id="contrast-toggle" aria-pressed="false">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.8"></circle>
+            <path d="M12 2a10 10 0 0 0 0 20Z" fill="currentColor"></path>
+          </svg>
+          <span class="contrast-toggle-full">Mais contraste</span>
+          <span class="contrast-toggle-short">Contraste</span>
+        </button>
+      </div>
     </header>
 
     <main id="conteudo" class="container">
-      {startHereVideos.length > 0 && (
-        <section class="start-here" aria-labelledby="comece-aqui">
-          <h2 id="comece-aqui">Nunca usou IA antes? Comece aqui</h2>
-          <ul>
-            {startHereVideos.map((video) => (
-              <li>
-                <a href={`#video-${video.id}`} data-start-here-link data-video-id={video.id}>
-                  {video.title}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <div class="hero">
+        <h1>Aprender a usar a IA,<br />com calma e no seu tempo.</h1>
+        <p>{pageDescription}</p>
+      </div>
 
       <section class="player-section" id="player-section" hidden>
         <button type="button" class="back-button" id="back-to-list">
@@ -61,6 +108,7 @@ const pageDescription =
       import { normalizeText } from "../lib/search";
 
       const searchInput = document.getElementById("search-input") as HTMLInputElement;
+      const searchButton = document.getElementById("search-button") as HTMLButtonElement;
       const clearSearchButton = document.getElementById("clear-search") as HTMLButtonElement;
       const emptyState = document.getElementById("empty-state") as HTMLElement;
       const categorySections = Array.from(
@@ -103,6 +151,7 @@ const pageDescription =
       }
 
       searchInput?.addEventListener("input", () => applyFilter(searchInput.value));
+      searchButton?.addEventListener("click", () => applyFilter(searchInput.value));
 
       clearSearchButton?.addEventListener("click", () => {
         searchInput.value = "";
@@ -202,26 +251,60 @@ const pageDescription =
         });
       }
 
-      for (const link of document.querySelectorAll<HTMLAnchorElement>("[data-start-here-link]")) {
-        link.addEventListener("click", (event) => {
-          event.preventDefault();
-          const videoId = link.dataset.videoId;
-          const card = document.querySelector<HTMLButtonElement>(
-            `[data-video-card][data-video-id="${videoId}"]`
-          );
-          if (card) {
-            const { youtubeId = "", title = "" } = card.dataset;
-            playVideo(youtubeId, title);
-          }
-        });
-      }
-
       backToListButton?.addEventListener("click", backToList);
       playerErrorBack?.addEventListener("click", backToList);
 
       backToTopButton?.addEventListener("click", () => {
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
+
+      // Tamanho do texto (persistido em localStorage, aplicado ao <html>)
+      const TEXT_SCALE_KEY = "tutoria-text-scale";
+      const textScaleButtons = Array.from(
+        document.querySelectorAll<HTMLButtonElement>("[data-text-scale-btn]")
+      );
+
+      function applyTextScale(step: string) {
+        document.documentElement.setAttribute("data-text-scale", step);
+        for (const button of textScaleButtons) {
+          button.setAttribute("aria-pressed", String(button.dataset.textScaleBtn === step));
+        }
+      }
+
+      for (const button of textScaleButtons) {
+        button.addEventListener("click", () => {
+          const step = button.dataset.textScaleBtn ?? "1";
+          applyTextScale(step);
+          try {
+            localStorage.setItem(TEXT_SCALE_KEY, step);
+          } catch {
+            // localStorage indisponível — a escolha só vale para esta visita.
+          }
+        });
+      }
+
+      applyTextScale(document.documentElement.getAttribute("data-text-scale") ?? "1");
+
+      // Alto contraste (persistido em localStorage, aplicado ao <html>)
+      const CONTRAST_KEY = "tutoria-contrast";
+      const contrastToggle = document.getElementById("contrast-toggle") as HTMLButtonElement;
+
+      function applyContrast(isHigh: boolean) {
+        document.documentElement.setAttribute("data-contrast", isHigh ? "high" : "normal");
+        contrastToggle?.setAttribute("aria-pressed", String(isHigh));
+      }
+
+      contrastToggle?.addEventListener("click", () => {
+        const next = contrastToggle.getAttribute("aria-pressed") !== "true";
+        applyContrast(next);
+        try {
+          localStorage.setItem(CONTRAST_KEY, String(next));
+        } catch {
+          // localStorage indisponível — a escolha só vale para esta visita.
+        }
+      });
+
+      applyContrast(document.documentElement.getAttribute("data-contrast") === "high");
     </script>
   </body>
 </html>

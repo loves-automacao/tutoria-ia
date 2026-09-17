@@ -25,14 +25,26 @@ test("em tela de celular a fonte do corpo nunca fica abaixo de 16px", async ({ p
   expect(bodyFontSize).toBeGreaterThanOrEqual(16);
 });
 
-test("navegação por teclado: campo de busca e cards são alcançáveis via Tab", async ({ page }) => {
-  await page.goto("/");
-
+async function tabToFirstVideoCard(page: import("@playwright/test").Page) {
   await page.locator("#search-input").focus();
   await expect(page.locator("#search-input")).toBeFocused();
 
-  // Tab a partir da busca deve alcançar o primeiro card de vídeo.
-  await page.keyboard.press("Tab");
+  // A partir da busca, avança por Tab (botão "Buscar", atalhos de categoria)
+  // até alcançar o primeiro card — nada disso pode ser uma armadilha de foco.
+  for (let i = 0; i < 10; i++) {
+    const isOnCard = await page.evaluate(
+      () => document.activeElement?.hasAttribute("data-video-card") ?? false
+    );
+    if (isOnCard) return;
+    await page.keyboard.press("Tab");
+  }
+  throw new Error("Não foi possível alcançar um card de vídeo via Tab a partir da busca.");
+}
+
+test("navegação por teclado: campo de busca e cards são alcançáveis via Tab", async ({ page }) => {
+  await page.goto("/");
+
+  await tabToFirstVideoCard(page);
   const focused = page.locator(":focus");
   await expect(focused).toHaveAttribute("data-video-card", "");
 });
@@ -40,8 +52,7 @@ test("navegação por teclado: campo de busca e cards são alcançáveis via Tab
 test("cards de vídeo têm indicação visual de foco ao navegar por teclado", async ({ page }) => {
   await page.goto("/");
 
-  await page.locator("#search-input").focus();
-  await page.keyboard.press("Tab");
+  await tabToFirstVideoCard(page);
 
   const focusedCard = page.locator("[data-video-card]:focus");
   const outlineWidth = await focusedCard.evaluate(
