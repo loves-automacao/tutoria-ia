@@ -1,0 +1,315 @@
+---
+import "../styles/global.css";
+import VideoCatalog from "../components/VideoCatalog.astro";
+import { videos, categories } from "../data/videos";
+
+const pageTitle = "Tutoria IA — Vídeos simples para aprender Inteligência Artificial";
+const pageDescription =
+  "Vídeos curtos e explicados com calma para você aprender a usar inteligência artificial no seu dia a dia, no seu tempo.";
+---
+
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDescription} />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Atkinson+Hyperlegible:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script is:inline>
+      // Aplica preferências salvas antes da primeira renderização, evitando
+      // um "salto" visual de tamanho/contraste ao carregar a página.
+      try {
+        var savedScale = localStorage.getItem("tutoria-text-scale");
+        if (savedScale) document.documentElement.setAttribute("data-text-scale", savedScale);
+        var savedContrast = localStorage.getItem("tutoria-contrast");
+        if (savedContrast === "true") document.documentElement.setAttribute("data-contrast", "high");
+      } catch (error) {
+        // localStorage indisponível (ex: navegação privada) — segue com o padrão.
+      }
+    </script>
+  </head>
+  <body>
+    <a href="#conteudo" class="skip-link">Pular para o conteúdo</a>
+
+    <header class="site-header">
+      <div class="site-header-inner">
+        <a href="/" class="brand" style="text-decoration: none;">Tutoria IA</a>
+
+        <div class="text-size-control" role="group" aria-label="Tamanho do texto">
+          <span class="text-size-label">Tamanho do texto</span>
+          <button
+            type="button"
+            class="text-size-btn"
+            data-text-scale-btn="0"
+            aria-pressed="false"
+            style="font-size: 0.9375rem"
+          >
+            A
+          </button>
+          <button
+            type="button"
+            class="text-size-btn"
+            data-text-scale-btn="1"
+            aria-pressed="true"
+            style="font-size: 1.1875rem"
+          >
+            A
+          </button>
+          <button
+            type="button"
+            class="text-size-btn"
+            data-text-scale-btn="2"
+            aria-pressed="false"
+            style="font-size: 1.4375rem"
+          >
+            A
+          </button>
+        </div>
+
+        <button type="button" class="contrast-toggle" id="contrast-toggle" aria-pressed="false">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.8"></circle>
+            <path d="M12 2a10 10 0 0 0 0 20Z" fill="currentColor"></path>
+          </svg>
+          <span class="contrast-toggle-full">Mais contraste</span>
+          <span class="contrast-toggle-short">Contraste</span>
+        </button>
+      </div>
+    </header>
+
+    <main id="conteudo" class="container">
+      <a href="/" style="display: inline-flex; align-items: center; gap: 8px; font-weight: bold; color: var(--t-accent); text-decoration: none; margin-bottom: 24px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Voltar ao Início
+      </a>
+      
+      <div class="hero">
+        <h1>Aprender a usar a IA,<br />com calma e no seu tempo.</h1>
+        <p>{pageDescription}</p>
+      </div>
+
+      <section class="player-section" id="player-section" hidden>
+        <button type="button" class="back-button" id="back-to-list">
+          ← Voltar para a lista de vídeos
+        </button>
+        <h2 id="player-title"></h2>
+        <div class="player-wrapper" id="player-wrapper"></div>
+        <p class="player-error" id="player-error" hidden>
+          Não foi possível carregar este vídeo agora.
+          <button type="button" id="player-error-back">Voltar para a lista de vídeos</button>
+        </p>
+      </section>
+
+      <VideoCatalog videos={videos} categories={categories} />
+    </main>
+
+    <button type="button" class="back-to-top" id="back-to-top">Voltar ao topo</button>
+
+    <script>
+      import { normalizeText } from "../lib/search";
+
+      const searchInput = document.getElementById("search-input") as HTMLInputElement;
+      const searchButton = document.getElementById("search-button") as HTMLButtonElement;
+      const clearSearchButton = document.getElementById("clear-search") as HTMLButtonElement;
+      const emptyState = document.getElementById("empty-state") as HTMLElement;
+      const categorySections = Array.from(
+        document.querySelectorAll<HTMLElement>("[data-category-section]")
+      );
+      const videoCards = Array.from(
+        document.querySelectorAll<HTMLButtonElement>("[data-video-card]")
+      );
+
+      const playerSection = document.getElementById("player-section") as HTMLElement;
+      const playerWrapper = document.getElementById("player-wrapper") as HTMLElement;
+      const playerTitle = document.getElementById("player-title") as HTMLElement;
+      const playerError = document.getElementById("player-error") as HTMLElement;
+      const videoListSection = document.getElementById("video-list-section") as HTMLElement;
+      const backToListButton = document.getElementById("back-to-list") as HTMLButtonElement;
+      const backToTopButton = document.getElementById("back-to-top") as HTMLButtonElement;
+      const playerErrorBack = document.getElementById("player-error-back") as HTMLButtonElement;
+
+      function applyFilter(query: string) {
+        const normalizedQuery = normalizeText(query);
+        let visibleCount = 0;
+
+        for (const section of categorySections) {
+          let visibleInSection = 0;
+          const cards = section.querySelectorAll<HTMLButtonElement>("[data-video-card]");
+          for (const card of cards) {
+            const titleNormalized = card.dataset.titleNormalized ?? "";
+            const matches = !normalizedQuery || titleNormalized.includes(normalizedQuery);
+            const listItem = card.closest("li");
+            if (listItem) listItem.hidden = !matches;
+            if (matches) {
+              visibleInSection += 1;
+              visibleCount += 1;
+            }
+          }
+          section.hidden = visibleInSection === 0;
+        }
+
+        emptyState.hidden = visibleCount !== 0;
+      }
+
+      searchInput?.addEventListener("input", () => applyFilter(searchInput.value));
+      searchButton?.addEventListener("click", () => applyFilter(searchInput.value));
+
+      clearSearchButton?.addEventListener("click", () => {
+        searchInput.value = "";
+        applyFilter("");
+        searchInput.focus();
+      });
+
+      // A API do player (em vez de um <iframe> simples) é necessária para
+      // detectar via onError um vídeo removido/privado incorretamente (cross-origin
+      // impede detectar isso a partir de um <iframe> comum).
+      let youTubeApiPromise: Promise<any> | null = null;
+      function loadYouTubeApi(): Promise<any> {
+        const w = window as any;
+        if (!youTubeApiPromise) {
+          youTubeApiPromise = new Promise((resolve) => {
+            if (w.YT?.Player) {
+              resolve(w.YT);
+              return;
+            }
+            const previousCallback = w.onYouTubeIframeAPIReady;
+            w.onYouTubeIframeAPIReady = () => {
+              previousCallback?.();
+              resolve(w.YT);
+            };
+            const script = document.createElement("script");
+            script.src = "https://www.youtube.com/iframe_api";
+            document.head.appendChild(script);
+          });
+        }
+        return youTubeApiPromise;
+      }
+
+      function showPlayerError() {
+        playerWrapper.innerHTML = "";
+        playerError.hidden = false;
+      }
+
+      function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+        return new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("timeout")), ms);
+          promise.then(
+            (value) => {
+              clearTimeout(timer);
+              resolve(value);
+            },
+            (error) => {
+              clearTimeout(timer);
+              reject(error);
+            }
+          );
+        });
+      }
+
+      async function playVideo(youtubeId: string, title: string) {
+        playerError.hidden = true;
+        playerTitle.textContent = title;
+        playerWrapper.innerHTML = "";
+
+        videoListSection.hidden = true;
+        playerSection.hidden = false;
+        backToListButton.focus();
+        playerSection.scrollIntoView({ behavior: "smooth", block: "start" });
+
+        if (!youtubeId) {
+          showPlayerError();
+          return;
+        }
+
+        const mountPoint = document.createElement("div");
+        playerWrapper.appendChild(mountPoint);
+
+        try {
+          const YT = await withTimeout(loadYouTubeApi(), 8000);
+          new YT.Player(mountPoint, {
+            videoId: youtubeId,
+            host: "https://www.youtube-nocookie.com",
+            playerVars: { autoplay: 1, rel: 0 },
+            events: {
+              onError: showPlayerError,
+            },
+          });
+        } catch {
+          showPlayerError();
+        }
+      }
+
+      function backToList() {
+        playerSection.hidden = true;
+        playerWrapper.innerHTML = "";
+        videoListSection.hidden = false;
+      }
+
+      for (const card of videoCards) {
+        card.addEventListener("click", () => {
+          const { youtubeId = "", title = "" } = card.dataset;
+          playVideo(youtubeId, title);
+        });
+      }
+
+      backToListButton?.addEventListener("click", backToList);
+      playerErrorBack?.addEventListener("click", backToList);
+
+      backToTopButton?.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+
+      // Tamanho do texto (persistido em localStorage, aplicado ao <html>)
+      const TEXT_SCALE_KEY = "tutoria-text-scale";
+      const textScaleButtons = Array.from(
+        document.querySelectorAll<HTMLButtonElement>("[data-text-scale-btn]")
+      );
+
+      function applyTextScale(step: string) {
+        document.documentElement.setAttribute("data-text-scale", step);
+        for (const button of textScaleButtons) {
+          button.setAttribute("aria-pressed", String(button.dataset.textScaleBtn === step));
+        }
+      }
+
+      for (const button of textScaleButtons) {
+        button.addEventListener("click", () => {
+          const step = button.dataset.textScaleBtn ?? "1";
+          applyTextScale(step);
+          try {
+            localStorage.setItem(TEXT_SCALE_KEY, step);
+          } catch {
+            // localStorage indisponível — a escolha só vale para esta visita.
+          }
+        });
+      }
+
+      applyTextScale(document.documentElement.getAttribute("data-text-scale") ?? "1");
+
+      // Alto contraste (persistido em localStorage, aplicado ao <html>)
+      const CONTRAST_KEY = "tutoria-contrast";
+      const contrastToggle = document.getElementById("contrast-toggle") as HTMLButtonElement;
+
+      function applyContrast(isHigh: boolean) {
+        document.documentElement.setAttribute("data-contrast", isHigh ? "high" : "normal");
+        contrastToggle?.setAttribute("aria-pressed", String(isHigh));
+      }
+
+      contrastToggle?.addEventListener("click", () => {
+        const next = contrastToggle.getAttribute("aria-pressed") !== "true";
+        applyContrast(next);
+        try {
+          localStorage.setItem(CONTRAST_KEY, String(next));
+        } catch {
+          // localStorage indisponível — a escolha só vale para esta visita.
+        }
+      });
+
+      applyContrast(document.documentElement.getAttribute("data-contrast") === "high");
+    </script>
+  </body>
+</html>

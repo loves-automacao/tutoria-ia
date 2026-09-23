@@ -489,9 +489,7 @@ button {
     font-size: 1.4375rem;
   }
 
-  .text-size-label,
-  .text-size-btn[data-text-scale-btn="0"],
-  .text-size-btn[data-text-scale-btn="2"] {
+  .text-size-label {
     display: none;
   }
 

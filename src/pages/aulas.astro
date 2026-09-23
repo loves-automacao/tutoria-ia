@@ -1,9 +1,8 @@
 ---
 import "../styles/global.css";
 
-const pageTitle = "Processo de aprendizagem com a Dra. Ana — Tutoria IA";
-const pageDescription =
-  "Inteligência Artificial para negócios femininos. Transforme suas decisões com método e direção científica.";
+const pageTitle = "Aulas — Tutoria IA";
+const pageDescription = "Selecione uma aula para começar.";
 ---
 
 <html lang="pt-BR">
@@ -25,91 +24,6 @@ const pageDescription =
         if (savedContrast === "true") document.documentElement.setAttribute("data-contrast", "high");
       } catch (error) {}
     </script>
-    <style>
-      .home-hero {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        min-height: 60vh;
-        gap: 32px;
-      }
-      .home-hero h1 {
-        font-size: 3.5rem;
-        line-height: 1.1;
-        max-width: 800px;
-        margin: 0;
-      }
-      .home-hero p {
-        font-size: 1.5rem;
-        max-width: 600px;
-        color: var(--t-bodyc);
-        margin: 0;
-      }
-      .home-actions {
-        display: flex;
-        gap: 32px;
-        margin-top: 32px;
-        flex-wrap: wrap;
-        justify-content: center;
-      }
-      .btn-primary, .btn-secondary {
-        display: inline-flex;
-        align-items: center;
-        gap: 16px;
-        min-height: 80px;
-        padding: 0 40px;
-        font-size: 1.5rem;
-        font-weight: 700;
-        border-radius: var(--t-r);
-        text-decoration: none;
-        transition: all 0.2s ease;
-      }
-      .btn-primary {
-        background: var(--t-accent);
-        color: #fff;
-        border: 2px solid var(--t-accent);
-      }
-      .btn-primary:hover {
-        background: var(--t-accentd);
-        border-color: var(--t-accentd);
-        transform: translateY(-2px);
-      }
-      .btn-secondary {
-        background: transparent;
-        color: var(--t-ink);
-        border: 2px solid var(--t-ink);
-      }
-      .btn-secondary:hover {
-        background: var(--t-tint);
-        transform: translateY(-2px);
-      }
-      
-      @media (max-width: 640px) {
-        .home-hero h1 {
-          font-size: 2.5rem;
-        }
-        .home-hero p {
-          font-size: 1.25rem;
-        }
-        .home-actions {
-          flex-direction: column;
-          width: 100%;
-          gap: 16px;
-        }
-        .btn-primary, .btn-secondary {
-          width: 100%;
-          justify-content: center;
-          min-height: 80px;
-          padding: 0 24px;
-          font-size: 1.5rem;
-        }
-        .btn-secondary {
-          order: -1;
-        }
-      }
-    </style>
   </head>
   <body>
     <a href="#conteudo" class="skip-link">Pular para o conteúdo</a>
@@ -137,26 +51,29 @@ const pageDescription =
     </header>
 
     <main id="conteudo" class="container">
-      <div class="home-hero">
-        <h1>Processo de aprendizagem com a Dra. Ana</h1>
-        <p>{pageDescription}</p>
+      <a href="/" style="display: inline-flex; align-items: center; gap: 8px; font-weight: bold; color: var(--t-accent); text-decoration: none; margin-bottom: 24px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Voltar ao Início
+      </a>
+
+      <div class="page-hero" style="padding: 20px 0; text-align: left;">
+        <h1 style="font-size: 2.5rem; margin-bottom: 12px; font-family: var(--t-head);">Aulas</h1>
+        <p style="font-size: 1.25rem; color: var(--t-bodyc); margin-bottom: 40px;">Selecione uma aula para começar.</p>
         
-        <div class="home-actions">
-          <a href="/aulas" class="btn-primary">
-            <svg viewBox="0 0 24 24" width="32" height="32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-              <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-            </svg>
-            Aulas
-          </a>
-          <a href="/explorar" class="btn-secondary">
-            <svg viewBox="0 0 24 24" width="32" height="32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="11" cy="11" r="8"/>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            Explorar
-          </a>
-        </div>
+        <section class="category">
+          <ul class="video-grid" style="list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 36px;">
+            <li>
+              <a href="/aulas/1" class="video-card" style="display: flex; flex-direction: column; border: 1px solid var(--t-border); border-radius: var(--t-card-r); padding: 32px; background: var(--t-tint); text-decoration: none; transition: transform 0.2s ease, box-shadow 0.2s ease;">
+                <div style="font-size: 4rem; font-family: var(--t-head); font-weight: bold; color: var(--t-accent); line-height: 1; margin-bottom: 16px;">1</div>
+                <h3 class="video-card-title" style="margin: 0 0 8px 0; font-size: 1.75rem; color: var(--t-ink);">Aula 1: Fazer Ser Lembrada</h3>
+                
+                <p style="color: var(--t-muted); margin: 0; font-size: 1.125rem;">
+                  Construa sua mensagem central e o Post Fixo 2 para que o mercado lembre do valor do seu trabalho.
+                </p>
+              </a>
+            </li>
+          </ul>
+        </section>
       </div>
     </main>
 
